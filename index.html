@@ -1,0 +1,708 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Limits — A model can only learn what someone thought to write down.</title>
+<meta name="description" content="A working paper on the boundary of machine knowledge. Six cases on what foundation models cannot learn — because the knowledge that matters was never written down.">
+<meta property="og:title" content="AI Limits — A model can only learn what someone thought to write down.">
+<meta property="og:description" content="Six cases on the boundary of machine knowledge.">
+<meta property="og:type" content="article">
+<meta name="theme-color" content="#f4f1ea">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300..900;1,8..60,300..900&family=JetBrains+Mono:wght@300;400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
+
+<style>
+/* ============================================================
+   Production-only overrides — editorial detailing
+   ============================================================ */
+
+/* Masthead: brand left (with strap-line), nav perfectly centred, sticky on scroll */
+.masthead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--paper);
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+.masthead nav {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+.masthead .brand-cell {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+.masthead .brand-cell .hero-v2-eyebrow {
+  margin: 0;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  gap: 8px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--muted);
+}
+.masthead .brand-cell .hero-v2-eyebrow .dot {
+  width: 4px; height: 4px;
+}
+a.brand { text-decoration: none; cursor: pointer; transition: opacity 0.15s; }
+a.brand:hover { opacity: 0.7; }
+
+/* Hero: full-width title, compressed to fit the cards on first screen */
+.hero-v2 {
+  min-height: calc(100vh - 50px);
+  padding-top: 16px;
+  padding-bottom: 18px;
+  display: flex;
+}
+.hero-v2 .hero-v2-inner {
+  gap: 14px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.hero-v2 .hero-v2-eyebrow { margin: 0; }
+.hero-v2 .hero-v2-title {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(34px, 5.4vw, 84px);
+  line-height: 0.96;
+  letter-spacing: -0.022em;
+  margin: 0;
+  text-wrap: balance;
+  max-width: none;
+  width: 100%;
+}
+.hero-v2 .hero-v2-title em { font-style: italic; color: var(--accent); }
+.hero-v2-bar {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 32px;
+  border-top: 1px solid var(--rule);
+  padding-top: 12px;
+  flex-wrap: wrap;
+  text-align: center;
+}
+.hero-v2-bar .hero-v2-sub {
+  margin: 0 auto;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: clamp(15px, 1.3vw, 20px);
+  line-height: 1.35;
+  color: var(--ink-soft);
+  max-width: 80ch;
+  text-align: center;
+}
+.hero-v2 .cards {
+  margin-top: auto;
+}
+.hero-v2-interlude {
+  flex-grow: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+  padding: 18px 0 6px;
+  margin-top: 4px;
+}
+.hero-v2-interlude blockquote {
+  margin: 0;
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(22px, 3vw, 44px);
+  line-height: 1.15;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  max-width: 32ch;
+  text-wrap: balance;
+  position: relative;
+}
+.hero-v2-interlude blockquote::before,
+.hero-v2-interlude blockquote::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: clamp(40px, 8vw, 140px);
+  height: 1px;
+  background: var(--rule);
+  opacity: 0.4;
+}
+.hero-v2-interlude blockquote::before { right: calc(100% + 28px); }
+.hero-v2-interlude blockquote::after  { left:  calc(100% + 28px); }
+.hero-v2-interlude .int-mark {
+  font-family: var(--mono);
+  font-style: normal;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.hero-v2-interlude em { color: var(--accent); font-style: italic; }
+@media (max-width: 720px) {
+  .hero-v2-interlude { padding: 14px 0; gap: 10px; }
+  .hero-v2-interlude blockquote::before,
+  .hero-v2-interlude blockquote::after { display: none; }
+}
+.hero-v2 .cards .card {
+  min-height: 200px;
+  padding: 18px 16px 22px;
+  gap: 8px;
+}
+.hero-v2 .cards .card-num { font-size: 10px; }
+.hero-v2 .cards .card-field {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--ink);
+  text-transform: uppercase;
+}
+.hero-v2 .cards .card-ttl {
+  font-size: clamp(15px, 1.2vw, 18px);
+  line-height: 1.35;
+  padding-right: 10px;
+  margin-top: 0;
+}
+
+/* Section folios */
+.sources, .contribute { padding-top: 96px; position: relative; }
+.sources::before, .contribute::before {
+  position: absolute;
+  top: 32px;
+  left: 32px;
+  right: 32px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-top: 1px solid var(--rule);
+  padding-top: 14px;
+  white-space: pre;
+  pointer-events: none;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+}
+.sources::before { content: "AI Limits    Apparatus · Sources & further reading    Cited in the text"; }
+.contribute::before {
+  content: "AI Limits    Coda · For the next volume    Submissions open";
+  border-top-color: rgba(244,241,234,0.22);
+  color: rgba(244,241,234,0.5);
+}
+
+/* Compressed case padding */
+.case { padding-top: 70px; padding-bottom: 70px; }
+.pull { padding: 64px 32px; }
+.sources { padding-top: 84px; padding-bottom: 70px; }
+.contribute { padding-top: 84px; padding-bottom: 90px; }
+.case h3 { margin-bottom: 22px; }
+.case-body .prose p { margin-bottom: 16px; }
+.case-body .prose p.lead { margin-bottom: 20px; }
+
+/* Per-case folio strings */
+.case > .wrap { position: relative; }
+.case > .wrap::before {
+  content: var(--folio);
+  position: absolute;
+  top: -64px;
+  left: 0;
+  right: 0;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-top: 1px solid var(--rule);
+  padding-top: 14px;
+  white-space: pre;
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.case--ink > .wrap::before { color: rgba(244,241,234,0.5); border-top-color: rgba(244,241,234,0.22); }
+#case-01 > .wrap { --folio: "AI Limits    Case 01 of 06 · Enterprise software    The pitch"; }
+#case-02 > .wrap { --folio: "AI Limits    Case 02 of 06 · Project Delivery    The Friday"; }
+#case-03 > .wrap { --folio: "AI Limits    Case 03 of 06 · Risk & judgement    Pre-verbal"; }
+#case-04 > .wrap { --folio: "AI Limits    Case 04 of 06 · Frontier science    Reversal"; }
+#case-05 > .wrap { --folio: "AI Limits    Case 05 of 06 · Creative work    The source"; }
+#case-06 > .wrap { --folio: "AI Limits    Case 06 of 06 · Tradition    The map"; }
+
+/* Alternating asymmetry */
+#case-02 > .wrap,
+#case-04 > .wrap,
+#case-06 > .wrap {
+  grid-template-columns: 280px minmax(0, 1fr) 180px;
+}
+#case-02 .rail, #case-04 .rail, #case-06 .rail {
+  grid-column: 3;
+  text-align: left;
+  padding-right: 0;
+  padding-left: 4px;
+}
+#case-02 .margin, #case-04 .margin, #case-06 .margin { grid-column: 1; }
+#case-02 .case-body, #case-04 .case-body, #case-06 .case-body { grid-column: 2; }
+
+/* Tail stamps */
+.case-body--single { position: relative; }
+.case-body--single::after {
+  content: var(--stamp);
+  display: block;
+  margin-top: 36px;
+  padding-top: 14px;
+  border-top: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: pre-line;
+  max-width: 60ch;
+}
+.case--ink .case-body--single::after { border-top-color: rgba(244,241,234,0.22); color: rgba(244,241,234,0.55); }
+#case-01 .case-body--single { --stamp: "Seen by the model:  the vendor’s roadmap deck.\AWhat it cannot see:  which feature the user actually opens at 9 a.m."; }
+#case-02 .case-body--single { --stamp: "Seen by the model:  the published method.\AWhat it cannot see:  the workstream the partner under-staffs every time."; }
+#case-03 .case-body--single { --stamp: "Seen by the model:  the post-mortem template.\AWhat it cannot see:  the silence after the IT director uses a particular phrase."; }
+#case-04 .case-body--single { --stamp: "Seen by the model:  the consensus, summarised confidently.\AWhat it cannot see:  the part of the consensus that will be wrong by 2030."; }
+#case-05 .case-body--single { --stamp: "Seen by the model:  the surface of the prose.\AWhat it cannot see:  the choice that selected this premise from a thousand."; }
+#case-06 .case-body--single { --stamp: "Seen by the model:  the description of the state.\AWhat it cannot see:  the state itself."; }
+
+/* Rail rule */
+.case .rail::after {
+  content: "";
+  position: absolute;
+  right: -32px;
+  top: 8px;
+  bottom: 8px;
+  width: 1px;
+  background: var(--rule);
+  opacity: 0.5;
+}
+#case-02 .rail::after, #case-04 .rail::after, #case-06 .rail::after { right: auto; left: -32px; }
+.case--ink .rail::after { background: rgba(244,241,234,0.22); }
+
+@media (max-width: 1024px) {
+  .case { padding-top: 64px; }
+  .case > .wrap::before { top: -42px; padding-top: 10px; font-size: 9px; letter-spacing: 0.16em; }
+  #case-02 > .wrap, #case-04 > .wrap, #case-06 > .wrap {
+    grid-template-columns: 120px minmax(0, 1fr) 220px;
+  }
+  #case-02 .rail, #case-04 .rail, #case-06 .rail { grid-column: 1; padding-left: 0; }
+  #case-02 .margin, #case-04 .margin, #case-06 .margin { grid-column: 3; }
+  #case-02 .case-body, #case-04 .case-body, #case-06 .case-body { grid-column: 2; }
+  .case .rail::after { display: none; }
+  .hero-v2 { min-height: 0; padding-bottom: 32px; }
+  .hero-v2 .cards .card { min-height: 130px; }
+}
+@media (max-width: 960px) {
+  .masthead .brand-cell .hero-v2-eyebrow { display: none; }
+}
+@media (max-width: 720px) {
+  .masthead nav { position: static; transform: none; }
+  .hero-v2 .hero-v2-title { font-size: clamp(30px, 8vw, 48px); }
+}
+@media (max-width: 880px) {
+  .case-body--single::after { margin-top: 28px; font-size: 10px; }
+  .sources::before, .contribute::before { left: 22px; right: 22px; font-size: 9px; letter-spacing: 0.14em; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<header class="masthead">
+  <div class="brand-cell">
+    <a class="brand" href="#" aria-label="AI Limits — home"><b>AI</b> <em>Limits</em></a>
+    <div class="hero-v2-eyebrow">
+      <span class="dot"></span><span>A working paper on the boundary of machine knowledge</span>
+    </div>
+  </div>
+  <nav>
+    <a href="#stories">Stories</a>
+    <a href="#sources">Sources</a>
+    <a href="#contribute">Contribute</a>
+  </nav>
+</header>
+
+<section class="hero-v2">
+  <div class="hero-v2-inner">
+    <h1 class="hero-v2-title" style="text-align: center">A model can only learn what someone <em>thought to write down</em>.</h1>
+    <div class="hero-v2-bar">
+      <p class="hero-v2-sub" style="text-align: center">This is NOT an argument against AI. It asks where, in your own domain, <em>the writing stops</em>.</p>
+    </div>
+
+    <aside class="hero-v2-interlude">
+      <blockquote>“We can know <em>more</em> than we can tell.”</blockquote>
+      <span class="int-mark">Polanyi &middot; 1966 &middot; the thesis, in six words</span>
+    </aside>
+
+    <div class="cards" id="stories">
+      <a class="card" href="#case-01">
+        <span class="card-num">Case Study 1</span>
+        <span class="card-field">Enterprise software</span>
+        <span class="card-ttl">Using software as per your need, <em>not as per vendor's interests</em>.</span>
+      </a>
+      <a class="card" href="#case-02">
+        <span class="card-num">Case Study 2</span>
+        <span class="card-field">Project Delivery</span>
+        <span class="card-ttl">Implementation wisdom <em>retires every Friday</em>.</span>
+      </a>
+      <a class="card" href="#case-03">
+        <span class="card-num">Case Study 3</span>
+        <span class="card-field">Risk &amp; judgement</span>
+        <span class="card-ttl">The post&#8209;mortem <em>nobody wrote</em>.</span>
+      </a>
+      <a class="card" href="#case-04">
+        <span class="card-num">Case Study 4</span>
+        <span class="card-field">Frontier science</span>
+        <span class="card-ttl">The genome we once <em>called junk</em>.</span>
+      </a>
+      <a class="card" href="#case-05">
+        <span class="card-num">Case Study 5</span>
+        <span class="card-field">Creative work</span>
+        <span class="card-ttl">The novelist who does not know <em>where the story comes from</em>.</span>
+      </a>
+      <a class="card" href="#case-06">
+        <span class="card-num">Case Study 6</span>
+        <span class="card-field">Tradition</span>
+        <span class="card-ttl">Teachings that survive only by <em>transmission</em>.</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section class="case" id="case-01">
+  <div class="wrap">
+    <div class="rail">
+      <span class="glyph">01</span>
+      <span class="field-tag">Enterprise software</span>
+      <span class="rail-meta">Case I &middot; The pitch</span>
+    </div>
+    <div class="case-body case-body--single">
+      <h3>Using software as per your need, <em>not as per vendor's interests</em>.</h3>
+      <div class="prose">
+        <p class="lead">Organisations rarely buy what they need. They buy what is positioned.</p>
+        <p>The people who know which features matter — partner consultants, long-tenured admins, third-line engineers — are not in the room. The small, unglamorous capability that the average user touches every day is rarely the one demoed.</p>
+        <p>An LLM trained on the published surface will systematically over-recommend the new and under-recommend the boring thing that works.</p>
+      </div>
+    </div>
+    <aside class="margin">
+      <span class="m-label">In the margin</span>
+      <p class="m-quote">We can know more than we can tell.</p>
+      <span class="m-cite">— Polanyi, <em>The Tacit Dimension</em>, 1966</span>
+    </aside>
+  </div>
+</section>
+
+<section class="case case--shaded" id="case-02">
+  <div class="wrap">
+    <div class="rail">
+      <span class="glyph">02</span>
+      <span class="field-tag">Project Delivery</span>
+      <span class="rail-meta">Case II &middot; The Friday</span>
+    </div>
+    <div class="case-body case-body--single">
+      <h3>Implementation wisdom <em>retires every Friday</em>.</h3>
+      <div class="prose">
+        <p class="lead">Enterprise software has had a remarkably stable failure rate for decades. The lessons of those failures must exist somewhere. They do — but not where a model can see them.</p>
+        <p>Post-mortems, when written at all, are written for the political survival of the project sponsor. The actual reasons live with the people who lived through them, and walk out the door when those people retire.</p>
+      </div>
+    </div>
+    <aside class="margin">
+      <span class="m-label">In the margin</span>
+      <p class="m-quote">Agile methods rely on the tacit knowledge embodied in the team, rather than writing the knowledge down in plans.</p>
+      <span class="m-cite">— Ryan &amp; O'Connor, 2009</span>
+    </aside>
+  </div>
+</section>
+
+<section class="pull">
+  <div class="wrap pull-grid">
+    <blockquote>
+      A model can only learn what someone <em>thought to write down</em>.
+    </blockquote>
+    <div class="pull-aside">
+      <span class="pull-mark">Refrain &mdash; 01</span>
+      <p>This is the thesis of the paper. Six cases follow as evidence; the seventh, we are asking you to write.</p>
+    </div>
+  </div>
+</section>
+
+<section class="case" id="case-03">
+  <div class="wrap">
+    <div class="rail">
+      <span class="glyph">03</span>
+      <span class="field-tag">Risk &amp; judgement</span>
+      <span class="rail-meta">Case III &middot; Pre-verbal</span>
+    </div>
+    <div class="case-body case-body--single">
+      <h3>The post-mortem <em>nobody wrote</em>.</h3>
+      <div class="prose">
+        <p class="lead">Every senior practitioner carries an internal library of failure modes — patterns that, on encountering, raise the hair on the back of the neck.</p>
+        <p>The patterns are pre-verbal. The practitioner notices something is wrong before they can say what. The hesitation a senior partner feels in the kickoff meeting when the client uses a particular phrase has saved more programmes than any framework — and was never documented anywhere.</p>
+      </div>
+    </div>
+    <aside class="margin">
+      <span class="m-label">In the margin</span>
+      <p>This is what Klein calls <em>recognition-primed decision</em>: the expert sees the pattern before they can name it.</p>
+      <span class="m-cite">cf. Klein, <em>Sources of Power</em>, 1998</span>
+    </aside>
+  </div>
+</section>
+
+<section class="case case--ink" id="case-04">
+  <div class="wrap">
+    <div class="rail">
+      <span class="glyph">04</span>
+      <span class="field-tag">Frontier science</span>
+      <span class="rail-meta">Case IV &middot; Reversal</span>
+    </div>
+    <div class="case-body case-body--single">
+      <h3>The genome we once <em>called junk</em>.</h3>
+      <div class="prose">
+        <p class="lead">For decades, molecular biology had a name for the part of the genome it did not understand: <em>junk</em>.</p>
+        <p>It is now understood that much of that material plays a role in the regulation of life itself. The terminology has shifted to "noncoding DNA" — an admission that the previous label confused absence of understanding with absence of function.</p>
+        <p>An LLM is, by construction, a confident summariser of the current state of recorded knowledge. The current state of recorded knowledge has, repeatedly, been wrong about what matters.</p>
+      </div>
+    </div>
+    <aside class="margin">
+      <span class="m-label">In the margin</span>
+      <p>The reversal entered the peer-reviewed canon with the ENCODE Project's 2012 publication in <em>Nature</em>, retiring "junk DNA" as a category.</p>
+      <span class="m-cite">ENCODE Consortium, <em>Nature</em> 489, 2012</span>
+    </aside>
+  </div>
+</section>
+
+<section class="pull">
+  <div class="wrap pull-grid">
+    <blockquote>
+      It does not argue against AI. It asks where, in your own domain, <em>the writing stops</em>.
+    </blockquote>
+    <div class="pull-aside">
+      <span class="pull-mark">Refrain &mdash; 02</span>
+      <p>The work is not to retreat from the model. It is to name the part of your domain it cannot reach &mdash; and to keep the people who can.</p>
+    </div>
+  </div>
+</section>
+
+<section class="case case--shaded" id="case-05">
+  <div class="wrap">
+    <div class="rail">
+      <span class="glyph">05</span>
+      <span class="field-tag">Creative work</span>
+      <span class="rail-meta">Case V &middot; The source</span>
+    </div>
+    <div class="case-body case-body--single">
+      <h3>The novelist who does not know <em>where the story comes from</em>.</h3>
+      <div class="prose">
+        <p class="lead">J.K. Rowling, asked over the years where her ideas come from, has been consistent and consistently humble.</p>
+        <p>An LLM produces a competent imitation of an existing voice. The judgement that selected, from a thousand possible premises, the one worth a decade of work is the part that was never written down.</p>
+      </div>
+    </div>
+    <aside class="margin">
+      <span class="m-label">In the margin</span>
+      <p class="m-quote">I haven't got the faintest idea where my ideas come from, or how my imagination works. I'm just grateful that it does.</p>
+      <span class="m-cite">— J.K. Rowling</span>
+    </aside>
+  </div>
+</section>
+
+<section class="case case--ink" id="case-06">
+  <div class="wrap">
+    <div class="rail">
+      <span class="glyph">06</span>
+      <span class="field-tag">Tradition</span>
+      <span class="rail-meta">Case VI &middot; The map</span>
+    </div>
+    <div class="case-body case-body--single">
+      <h3>Teachings that survive only by <em>transmission</em>.</h3>
+      <div class="prose">
+        <p class="lead">Every contemplative tradition we have a record of distinguishes between describing a state and inhabiting it. The Zen teacher's finger pointing at the moon. The Sufi instruction that the map is not the journey.</p>
+        <p>There exist categories of knowledge for which writing them down produces a false confidence in the reader. A foundation model is, by definition, a system that ingests the writing-down and generates more writing-down.</p>
+        <p>Six cases. One observation: the model is bounded by the corpus, the corpus is bounded by what humans wrote, and what humans wrote is a small fraction of what they know.</p>
+      </div>
+    </div>
+    <aside class="margin">
+      <span class="m-label">In the margin</span>
+      <p>The structural point is recoverable without religious commitment: any system that ingests text alone inherits text's silences.</p>
+    </aside>
+  </div>
+</section>
+
+<section class="sources" id="sources">
+  <div class="wrap">
+    <div class="sources-head">
+      <h2>Sources &amp; further reading.</h2>
+      <div class="meta">Cited in&nbsp;the&nbsp;text · Recommended companions</div>
+    </div>
+    <div class="sources-grid">
+      <div class="src-col">
+        <h5>Tacit knowledge — the foundational arc</h5>
+        <ol>
+          <li><b>Polanyi, M.</b> <em>The Tacit Dimension.</em> Univ. of Chicago Press, 1966.</li>
+          <li><b>Polanyi, M.</b> <em>Personal Knowledge.</em> Univ. of Chicago Press, 1958.</li>
+          <li><b>Ryle, G.</b> <em>The Concept of Mind.</em> Hutchinson, 1949.</li>
+          <li><b>Nonaka, I. &amp; Takeuchi, H.</b> <em>The Knowledge-Creating Company.</em> OUP, 1995.</li>
+          <li><b>Collins, H.</b> <em>Tacit and Explicit Knowledge.</em> Univ. of Chicago Press, 2010.</li>
+        </ol>
+      </div>
+      <div class="src-col">
+        <h5>Expertise &amp; embodied judgement</h5>
+        <ol>
+          <li><b>Dreyfus, H. &amp; Dreyfus, S.</b> <em>Mind Over Machine.</em> Free Press, 1986.</li>
+          <li><b>Schön, D.</b> <em>The Reflective Practitioner.</em> Basic Books, 1983.</li>
+          <li><b>Klein, G.</b> <em>Sources of Power.</em> MIT, 1998.</li>
+          <li><b>Kahneman, D.</b> <em>Thinking, Fast and Slow.</em> FSG, 2011.</li>
+          <li><b>Suchman, L.</b> <em>Plans and Situated Actions.</em> Cambridge, 1987.</li>
+        </ol>
+      </div>
+      <div class="src-col">
+        <h5>Software &amp; delivery</h5>
+        <ol>
+          <li><b>Ryan, S. &amp; O'Connor, R. V.</b> "Acquiring and sharing tacit knowledge in software development teams." <em>Information &amp; Software Technology,</em> 2009.</li>
+          <li><b>Davenport, T. &amp; Prusak, L.</b> <em>Working Knowledge.</em> HBS Press, 1998.</li>
+          <li><b>Brooks, F.</b> "No Silver Bullet." <em>IEEE Computer,</em> 1987.</li>
+        </ol>
+      </div>
+      <div class="src-col">
+        <h5>Limits of the recorded corpus</h5>
+        <ol>
+          <li><b>ENCODE Project Consortium.</b> "An integrated encyclopedia of DNA elements in the human genome." <em>Nature</em> 489, 2012.</li>
+          <li><b>Moalem, S.</b> <em>Survival of the Sickest,</em> Ch. 6. HarperCollins, 2007.</li>
+          <li><b>Rowling, J. K.</b> Selected interviews, 1998–2024.</li>
+          <li><b>Bender, E. et al.</b> "On the Dangers of Stochastic Parrots." <em>FAccT,</em> 2021.</li>
+          <li><b>Marcus, G.</b> "Deep Learning: A Critical Appraisal." arXiv 1801.00631, 2018.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="contribute" id="contribute">
+  <div class="contribute-inner">
+    <div class="contribute-stamp">For the next volume</div>
+    <h2>We have six. <em>What's the seventh?</em></h2>
+    <p class="contribute-lede">Tell us about a moment in your work where AI hit the wall of what nobody wrote down. The strongest submission becomes the next published case study — with full attribution.</p>
+
+    <!--
+      BACKEND — Formsubmit (no signup, free, unlimited).
+      First-time activation: send one test submission; Formsubmit will email a
+      confirmation link to research@ai-limits.org. Click it once and the route is live.
+    -->
+    <form class="contrib-form" id="contribForm"
+          action="https://formsubmit.co/research@ai-limits.org"
+          method="POST">
+      <input type="hidden" name="_subject" value="AI Limits — new case study submission">
+      <input type="hidden" name="_template" value="table">
+      <input type="hidden" name="_captcha" value="true">
+      <input type="hidden" name="_next" value="https://ai-limits.org/?submitted=1">
+      <label for="story" class="contrib-label">
+        <span class="contrib-num">№ 07</span>
+        <span class="contrib-prompt">Your story — one paragraph is enough.</span>
+      </label>
+      <textarea id="story" name="story" rows="4" placeholder="The moment the model gave a fluent answer that anyone in the room knew was wrong…" required></textarea>
+      <div class="contrib-row">
+        <input id="name" name="name" type="text" placeholder="Name" />
+        <input id="role" name="role" type="text" placeholder="Role &amp; organisation" />
+        <input id="email" name="email" type="email" placeholder="Email (so we can attribute)" />
+      </div>
+      <div class="contrib-actions">
+        <button class="contrib-submit" type="submit">
+          <span>Send to the editors</span>
+          <span class="arrow">→</span>
+        </button>
+        <span class="contrib-meta">~ 60 seconds &middot; reviewed by a human &middot; reply within a week</span>
+      </div>
+    </form>
+
+    <div class="contrib-success" id="success">
+      <div class="success-stamp">Received</div>
+      <p>Your story is in the editors' queue. We'll write to you first.</p>
+      <cite>— AI Limits, Editorial Board</cite>
+    </div>
+  </div>
+</section>
+
+<section class="colophon">
+  <div class="wrap">
+    <div>
+      <h5>Colophon</h5>
+      <p>AI Limits is a working paper on the boundaries of foundation-model competence in enterprise contexts.</p>
+      <p>Set in Source Serif 4, Inter, and JetBrains Mono.</p>
+    </div>
+    <div>
+      <h5>Contact</h5>
+      <p>Editorial enquiries: use the form above.</p>
+    </div>
+    <div>
+      <h5>Copyright</h5>
+      <p>© 2026 AI Limits.</p>
+      <p>Submissions licensed CC BY 4.0 with attribution.</p>
+    </div>
+  </div>
+</section>
+
+<script>
+  // Reading progress bar
+  (function() {
+    var bar = document.getElementById('progress');
+    function update() {
+      var h = document.documentElement, b = document.body;
+      var st = h.scrollTop || b.scrollTop;
+      var sh = (h.scrollHeight || b.scrollHeight) - h.clientHeight;
+      bar.style.width = (sh > 0 ? (st / sh) * 100 : 0) + '%';
+    }
+    window.addEventListener('scroll', update, { passive: true });
+    update();
+  })();
+
+  // Card animation stagger
+  (function(){
+    document.querySelectorAll('.cards .card').forEach(function(c, i){
+      c.style.animationDelay = (80 + i*60) + 'ms';
+    });
+  })();
+
+  // Success banner after Formsubmit redirect
+  if (new URLSearchParams(location.search).get('submitted') === '1') {
+    document.addEventListener('DOMContentLoaded', function(){
+      var f = document.getElementById('contribForm');
+      var s = document.getElementById('success');
+      if (f) f.style.display = 'none';
+      if (s) s.classList.add('visible');
+      history.replaceState({}, '', location.pathname + location.hash);
+    });
+  }
+</script>
+
+<!--
+  CLOUDFLARE WEB ANALYTICS
+  Replace YOUR_TOKEN_HERE with the token from your Cloudflare dashboard
+  (Analytics & Logs → Web Analytics → Add a site → copy the token from the snippet).
+  Until you replace it, the script will load but report nothing.
+-->
+<script defer
+        src="https://static.cloudflareinsights.com/beacon.min.js"
+        data-cf-beacon='{"token": "YOUR_TOKEN_HERE"}'></script>
+
+</body>
+</html>
